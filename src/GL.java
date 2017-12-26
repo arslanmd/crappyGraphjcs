@@ -1,5 +1,5 @@
 /*********************************************************************************************************************** 
- *  (c) 2016-2017 Dorukhan Arslan. All rights reserved.
+ *  (C) 2016-2017 Dorukhan Arslan. Released under the GPL.
  *  
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -29,25 +29,25 @@ import gl.TGA.*;
  *  3D graphics course. I wanted to try and apply the things I learned, challenge myself to implement it in
  *  Java (cuz I'm crazy), then extend it as an exercise in programming.
  ***********************************************************************************************************************
+ *  TODO: Major refactoring
  *  TODO: Scene class
- *  TODO: Base 3D object class (position, transform matrix, lookat, etc.) from which light, camera model inherit from
+ *  TODO: Base 3D object class from which camera, light, model etc. inherit from
  *  TODO: Better memory management
  *  TODO: Multithreading (a few janky portions implemented)
  *  TODO: Handle non-square aspect ratios (easy, I'm just lazy)
  *  TODO: Shader class
  *  TODO: Material class (store shaders and texture maps)
  *  TODO: View frustrum culling
- *  TODO?? Vertex attributes (sort of complete, but not integrated)
+ *  TODO: Vertex attributes (working on better encoding)
  *  TODO: Cubemapping (for reflections, omni light shadow maps etc.)
  *  TODO: Antialiasing (multisampling, supersampling)
  *  TODO: Deferred shading (GBuffers and whatnot) -> implemented as shader
  *  TODO: Euler and quaternion rotations
  *  TODO: Mipmapping
  *  TODO: Raycasting
- *  TODO: Simple raytracing
  *  TODO: Nearest neighbor (DONE), linear, and bilinear filtering
  *  TODO: Order independent transparency
- *  TODO: More blending functions
+ *  TODO: More image blending functions
  *  TODO: Gamma correction, color spaces, support for more bits per pixel
  **********************************************************************************************************************/
 
@@ -246,7 +246,7 @@ public class GL {
 //        zbuffer = new AtomicFloatArray(img.width*img.height);
 //        zbuffer.initValAll(-Float.MAX_VALUE);
         // We assign each thread an equal number of faces, split the workload among them.
-        // Should really just use the executors framework:
+        // Should implement work stealing.
         // https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/Executors.html#newWorkStealingPool
         final int processors =  Runtime.getRuntime().availableProcessors(),
                   facesToRender = model.nFaces()/processors;
@@ -307,8 +307,8 @@ public class GL {
     }
 
     // Example shader pipeline: deferred shading
-    // (0) ZBuffer ->(1) GBuffer ->(2) Diffuse ->(3) Specular ->(4) Shadow-mapping ->(5) Reflect (screen space)  ->(6) SSAO
-    // ^0-3 all have the same vertexShader (project viewport, transform scene, etc.)
+    // (0) ZBuffer ->(1) GBuffer ->(2) Diffuse ->(3) Specular ->(4) Reflect ->(5) Shadow-mapping ->(6) SSAO
+    // ^0-4 all have same vertexShader (project viewport, transform scene, etc.)
 
     class GauroudShader implements Shader {
         private int[] faceVertexIndices;
@@ -317,7 +317,7 @@ public class GL {
         volatile short[] zbuffer;
         private Triangle innerFrag = new Triangle();
         private int w, h, maxDepth = 255, minDepth = 0;
-        private float fov = -1;
+        private float fov = -1; // [Rads]
 
         private Vec3f  lightDir = new Vec3f(-1,0,-1), // directional
                        camera = new Vec3f(0, -1,3),
@@ -397,7 +397,7 @@ public class GL {
                 .add(uv[2].mul(bcScreen.z));
 
             // Gauroud Shading:
-            // * Linear interpolation between light intensities at each face's vertex normals.
+            // linear interpolation between light intensities at each face' vertex normals
             cpint = (ctints[0] * bcScreen.x)
                   + (ctints[1] * bcScreen.y)
                   + (ctints[2] * bcScreen.z);
@@ -420,5 +420,10 @@ public class GL {
     public static void main(String[] args) {
 
        new GL().exec();
+        // ColorBits clr = new ColorBits(DataMode.rgb,8);
+        // int[] intary = new int[]{123,456,789};
+        // clr.setFromIntAry(intary);
+        // intary = clr.getAsIntAry();
+        // for (int i : intary) System.out.println(i);
     }
 }

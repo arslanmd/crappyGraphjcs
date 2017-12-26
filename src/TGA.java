@@ -1,3 +1,20 @@
+/*********************************************************************************************************************** 
+ *  (C) 2016-2017 Dorukhan Arslan. Released under the GPL.
+ *  
+ *  This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program.  If not, see <http://www.gnu.org/licenses/
+ **********************************************************************************************************************/
+
 package gl;
 
 import java.io.FileInputStream;
@@ -70,8 +87,7 @@ class TGA {
     }
 
     /*******************************************************************************************************************
-     * TGAImage Class:
-     *      Adapted from the TGA format specification at: http://www.paulbourke.net/dataformats/tga/
+     * Adapted from the TGA format specification at: http://www.paulbourke.net/dataformats/tga/
      ******************************************************************************************************************/
     static class TGAImage {
         static final byte[] DEV_AREA_REF = {0x00, 0x00, 0x00, 0x00},
@@ -312,63 +328,46 @@ class TGA {
         }
     }
 
-    static void scale(TGAImage in, TGAImage out,
-                      char filterMode, boolean multi) {
-       if (multi) {
-           final int processors = Runtime.getRuntime().availableProcessors(),
-                     windowX = out.width / processors /*, windowY = out.height / processors*/;
+    static void scale(TGAImage in, TGAImage out, char filterMode) {
+        final int processors = Runtime.getRuntime().availableProcessors(),
+                  windowX = out.width / processors /*, windowY = out.height / processors*/;
 
-           AtomicInteger thrNum = new AtomicInteger(0);
-           CountDownLatch latch = new CountDownLatch(processors);
+        AtomicInteger thrNum = new AtomicInteger(0);
+        CountDownLatch latch = new CountDownLatch(processors);
 
-           Runnable scaleWindow = () -> {
-               int tn = thrNum.incrementAndGet(),
-                        wxEnd = tn * windowX;
-               double ncx, ncy;
-               int cxi, cyi;
-               for (int i = wxEnd - windowX; i < wxEnd; i++) {
-                   for (int j = 0; j < out.height; j++) {
-                       // normalized pixel coordinates
-                       ncx = (double) i / out.width; ncy = (double) j / out.height;
-                       cxi = (int) (ncx * in.width); cyi = (int) (ncy * in.height);
-                       try {
-                           out.set(i, j, in.get(cxi, cyi));
-                       } catch (IllegalArgumentException e) {
-                           out.set(i, j, BLACK);
-                       }
-                   }
-               }
-               latch.countDown();
-           };
-           // start all threads
-           for (int i = 1; i <= processors; i++) {
-               Thread thread = new Thread(scaleWindow);
-               thread.start();
-           }
-           // wait for all threads to finish
-           try {
-               latch.await();
-           } catch (InterruptedException e) {
-               e.printStackTrace();
-           }
-       } else {
-           double ncx, ncy;
-           int cxi, cyi;
-           for (int i = 0; i < out.width; i++) {
-               for (int j = 0; j < out.height; j++) {
-                   // normalized pixel coordinates
-                   ncx = (double) i / out.width; ncy = (double) j / out.height;
-                   cxi = (int) (ncx * in.width); cyi = (int) (ncy * in.height);
-                   try {
-                       out.set(i, j, in.get(cxi, cyi));
-                   } catch (IllegalArgumentException e) {
-                       out.set(i, j, BLACK);
-                   }
-               }
-           }
-       }
+        Runnable scaleWindow = () -> {
+            int tn = thrNum.incrementAndGet(),
+                    wxEnd = tn * windowX;
+            double ncx, ncy;
+            int cxi, cyi;
+            for (int i = wxEnd - windowX; i < wxEnd; i++) {
+                for (int j = 0; j < out.height; j++) {
+                    // normalized pixel coordinates
+                    ncx = (double) i / out.width; ncy = (double) j / out.height;
+                    cxi = (int) (ncx * in.width); cyi = (int) (ncy * in.height);
+                    try {
+                        out.set(i, j, in.get(cxi, cyi));
+                    } catch (IllegalArgumentException e) {
+                        out.set(i, j, BLACK);
+                    }
+                }
+            }
+            latch.countDown();
+        };
+
+        for (int i = 1; i <= processors; i++) {
+            Thread thread = new Thread(scaleWindow);
+            thread.start();
+        }
+
+        try {
+            latch.await();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 
+    // make this method more general, e.g., int/short/byte clamp(int val, int min, int max)
     static byte clamp8bpp(int in) {
         if (in > 127 && in < 256) return (byte) (in % 256);
         else if (in >= 0 && in <= 127) return (byte) in;

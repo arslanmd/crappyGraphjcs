@@ -1,3 +1,22 @@
+/*********************************************************************************************************************** 
+ *  (C) 2016-2017 Dorukhan Arslan. Released under the GPL.
+ *  
+ *  This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program.  If not, see <http://www.gnu.org/licenses/
+ **********************************************************************************************************************/
+
+//THIS CLASS IS EXPERIMENTAL!///////////////////////////////////////////////////////////////////////////////////////////
+
 package gl;
 
 import java.lang.reflect.Array;
@@ -7,6 +26,7 @@ import java.util.HashMap;
 // This is probably the jankiest piece of code I've ever written in Java (that's not saying much).
 // I feel dirty just looking at it...Thanks crappy Java generics.
 class Vertex {
+    // FIXME: This encoding is questionable at best...
     // EXAMPLE: vtxGroupSize = 3, attrKeys = {"coords", "norms"}, types = {Vec3i.class, Vec3f.class}
     // VALUES: Vec3i[c1-1,c1-2,c1-3, c2-1,c2-2,c2-3], Vec3f[n1-1,n1-2,n1-3, n2-1,n2-2,n2-3]
     // KEYS:        |------------coords------------|       |-------------norms------------|
